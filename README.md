@@ -106,6 +106,105 @@ A comprehensive, full-stack smart parking management solution that leverages mod
 - Arduino IDE
 - Git
 
+### MongoDB Installation
+
+#### Ubuntu/Debian Linux
+```bash
+# Import MongoDB public GPG key
+wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
+
+# Create list file for MongoDB
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+
+# Update package database
+sudo apt-get update
+
+# Install MongoDB packages
+sudo apt-get install -y mongodb-org
+
+# Start MongoDB service
+sudo systemctl start mongod
+
+# Enable MongoDB to start on boot
+sudo systemctl enable mongod
+
+# Verify installation
+mongod --version
+```
+
+#### macOS (using Homebrew)
+```bash
+# Install Homebrew (if not already installed)
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Install MongoDB
+brew tap mongodb/brew
+brew install mongodb-community
+
+# Start MongoDB service
+brew services start mongodb-community
+
+# Verify installation
+mongod --version
+```
+
+#### Windows
+1. Download MongoDB Community Server from official website:
+   https://www.mongodb.com/try/download/community
+
+2. Run the installer:
+   - Choose "Complete" setup type
+   - Install MongoDB as a service
+   - Check "Install MongoDB Compass" (optional but recommended)
+
+3. Add MongoDB to system PATH
+   - Typically installed in `C:\Program Files\MongoDB\Server\6.0\bin`
+
+4. Create data directory
+```cmd
+mkdir C:\data\db
+```
+
+5. Start MongoDB service
+```cmd
+net start MongoDB
+```
+
+### Initial Database Setup
+```bash
+# Connect to MongoDB
+mongo
+
+# Create database
+use parkingdb
+
+# Create admin user (replace with your credentials)
+use admin
+db.createUser({
+  user: "parkingadmin",
+  pwd: "your_secure_password",
+  roles: ["readWriteAnyDatabase", "dbAdminAnyDatabase"]
+})
+
+# Switch to project database
+use parkingdb
+```
+
+### Troubleshooting
+- Ensure MongoDB service is running
+- Check firewall settings
+- Verify connection string in `.env` file
+- For connection issues, check MongoDB logs
+  - Ubuntu: `/var/log/mongodb/mongod.log`
+  - macOS: `/usr/local/var/log/mongodb/mongo.log`
+  - Windows: `C:\Program Files\MongoDB\Server\6.0\log\mongod.log`
+
+### Security Recommendations
+- Always use strong, unique passwords
+- Limit network access to MongoDB
+- Use authentication and authorization
+- Regularly update MongoDB
+
 ### Backend Setup
 1. Clone the repository
    ```bash
