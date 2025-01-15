@@ -40,7 +40,7 @@ A modern web-based parking management system with real-time monitoring, analytic
 
 - **Hardware**:
   - Arduino for sensor integration
-  - IR sensors for vehicle detection
+  - Ultrasonic sensors for vehicle detection
 
 ## Installation
 
@@ -106,36 +106,37 @@ A modern web-based parking management system with real-time monitoring, analytic
 
 | Pin | Component | Description |
 |-----|-----------|-------------|
-| D2  | IR Sensor 1 | Parking slot 1 detection |
-| D3  | IR Sensor 2 | Parking slot 2 detection |
-| D4  | IR Sensor 3 | Parking slot 3 detection |
-| D5  | IR Sensor 4 | Parking slot 4 detection |
-| D6  | LED 1 | Status indicator for slot 1 (Green) |
-| D7  | LED 2 | Status indicator for slot 2 (Green) |
-| D8  | LED 3 | Status indicator for slot 3 (Green) |
-| D9  | LED 4 | Status indicator for slot 4 (Green) |
-| D10 | LED 5 | Status indicator for slot 1 (Red) |
-| D11 | LED 6 | Status indicator for slot 2 (Red) |
-| D12 | LED 7 | Status indicator for slot 3 (Red) |
-| D13 | LED 8 | Status indicator for slot 4 (Red) |
+| D2  | Ultrasonic Trigger 1 | Trigger pin for parking slot 1 sensor |
+| D3  | Ultrasonic Echo 1 | Echo pin for parking slot 1 sensor |
+| D4  | Ultrasonic Trigger 2 | Trigger pin for parking slot 2 sensor |
+| D5  | Ultrasonic Echo 2 | Echo pin for parking slot 2 sensor |
+| D6  | Ultrasonic Trigger 3 | Trigger pin for parking slot 3 sensor |
+| D7  | Ultrasonic Echo 3 | Echo pin for parking slot 3 sensor |
+| D8  | Ultrasonic Trigger 4 | Trigger pin for parking slot 4 sensor |
+| D9  | Ultrasonic Echo 4 | Echo pin for parking slot 4 sensor |
+| D10 | LED 1 | Status indicator for slot 1 (Green) |
+| D11 | LED 2 | Status indicator for slot 2 (Green) |
+| D12 | LED 3 | Status indicator for slot 3 (Green) |
+| D13 | LED 4 | Status indicator for slot 4 (Green) |
 
 ### Circuit Diagram
 ```
-IR Sensors:
+Ultrasonic Sensors:
 VCC -> 5V
 GND -> GND
-OUT -> Digital pins (D2-D5)
+Trigger -> Digital pins (D2, D4, D6, D8)
+Echo -> Digital pins (D3, D5, D7, D9)
 
 LEDs:
-Anode   -> Digital pins (D6-D13)
+Anode   -> Digital pins (D10-D13)
 Cathode -> GND (with 220Ω resistor)
 ```
 
 ### Hardware Requirements
 - 1x Arduino Uno/Nano
-- 4x IR Obstacle Avoidance Sensors
-- 8x LEDs (4 Green, 4 Red)
-- 8x 220Ω resistors
+- 4x HC-SR04 Ultrasonic Distance Sensors
+- 4x Green LEDs
+- 4x 220Ω resistors
 - Jumper wires
 - Breadboard
 - USB cable for Arduino
