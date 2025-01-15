@@ -1,0 +1,90 @@
+<!-- Analytics Dashboard -->
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-chart-line me-2"></i>Parking Analytics
+            </div>
+            <div class="btn-group analytics-period">
+                <button class="btn btn-sm btn-outline-light active" onclick="updateAnalytics('day')">Day</button>
+                <button class="btn btn-sm btn-outline-light" onclick="updateAnalytics('week')">Week</button>
+                <button class="btn btn-sm btn-outline-light" onclick="updateAnalytics('month')">Month</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- KPI Cards Row -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card kpi-card bg-primary text-white analytics-card">
+                        <div class="card-body">
+                            <h6>
+                                <i class="fas fa-car-side me-2"></i>Total Vehicles Today
+                            </h6>
+                            <h2 id="totalVehicles">0</h2>
+                            <small id="vehiclesTrend">+0% vs last period</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card kpi-card bg-success text-white analytics-card">
+                        <div class="card-body">
+                            <h6>
+                                <i class="fas fa-clock me-2"></i>Avg. Parking Duration
+                            </h6>
+                            <h2 id="avgDuration">0 min</h2>
+                            <small id="durationTrend">+0% vs last period</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card kpi-card bg-info text-white analytics-card">
+                        <div class="card-body">
+                            <h6>
+                                <i class="fas fa-percentage me-2"></i>Occupancy Rate
+                            </h6>
+                            <h2 id="occupancyRate">0%</h2>
+                            <small id="occupancyTrend">+0% vs last period</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card kpi-card bg-warning text-white analytics-card">
+                        <div class="card-body">
+                            <h6>
+                                <i class="fas fa-bolt me-2"></i>Peak Hour
+                            </h6>
+                            <h2 id="peakHour">--:--</h2>
+                            <small id="peakHourOccupancy">0 vehicles</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-3">
+                <!-- Occupancy Timeline -->
+                <div class="col-md-8">
+                    <div class="card chart-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Occupancy Timeline</h5>
+                            <div class="chart-container">
+                                <canvas id="occupancyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Slot Usage Distribution -->
+                <div class="col-md-4">
+                    <div class="card chart-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Slot Usage Distribution</h5>
+                            <div class="chart-container">
+                                <canvas id="slotDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

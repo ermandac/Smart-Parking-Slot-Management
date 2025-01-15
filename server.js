@@ -2,7 +2,7 @@ const express = require('express');
 const { SerialPort } = require('serialport');
 const path = require('path');
 const fs = require('fs');
-const { connectDB } = require('./models');
+const { connectDB, User, ParkingSlot, Reservation, ParkingLog } = require('./models');
 const dotenv = require('dotenv');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
@@ -83,9 +83,6 @@ app.get('/debug-routes', (req, res) => {
         }));
     res.json(routes);
 });
-
-// Import models (optional, but can be useful)
-const { User, ParkingSlot, Reservation, ParkingLog } = require('./models');
 
 // Global variable to track total slots
 const TOTAL_SLOTS = 6;  // Explicitly define total slots
@@ -196,9 +193,15 @@ app.get('/', (req, res) => {
     res.redirect('/admin'); // Redirect root to admin panel
 });
 
-// Route for admin page
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+// Admin dashboard route
+app.get('/admin', authenticateToken, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'), {
+        sessionTimeout: {
+            timeoutMinutes: SessionTimeoutConfig.timeoutMinutes,
+            gracePeriodSeconds: SessionTimeoutConfig.gracePeriodSeconds
+        },
+        vehicleControls: VehicleControlsConfig
+    });
 });
 
 // Customer View - Available Slots
@@ -645,6 +648,111 @@ app.post('/api/auth/refresh-token', authenticateToken, (req, res) => {
     }
 });
 
+// Initialize parking slots in database
+async function initializeParkingSlots() {
+    try {
+        const slots = await ParkingSlot.find();
+        if (slots.length === 0) {
+            // Create initial slots if none exist
+            const slotsToCreate = Array.from({ length: 6 }, (_, i) => ({
+                slotNumber: i + 1,
+                status: 'available'
+            }));
+            await ParkingSlot.insertMany(slotsToCreate);
+            console.log('Initialized parking slots in database');
+        }
+    } catch (error) {
+        console.error('Error initializing parking slots:', error);
+    }
+}
+
+// Modified vehicle detection route to use database
+app.post('/api/simulate-slot/:slotId', authenticateToken, async (req, res) => {
+    try {
+        console.log('Simulating slot:', {
+            slotId: req.params.slotId,
+            occupied: req.body.occupied,
+            userId: req.user.id
+        });
+
+        const slotId = parseInt(req.params.slotId);
+        const { occupied } = req.body;
+        const userId = req.user.id;
+
+        // Update slot status in database
+        const slot = await ParkingSlot.findOne({ slotNumber: slotId });
+        console.log('Found slot:', slot);
+
+        if (!slot) {
+            console.error('Slot not found:', slotId);
+            return res.status(404).json({ error: 'Slot not found' });
+        }
+
+        // Update slot status
+        slot.status = occupied ? 'occupied' : 'available';
+        
+        // Update current vehicle info if occupied
+        if (occupied) {
+            slot.currentVehicle = {
+                userId: userId,
+                entryTime: new Date(),
+                licensePlate: `SIM${slotId}` // Simulated license plate
+            };
+        } else {
+            slot.currentVehicle = null;
+        }
+
+        console.log('Saving slot with updates:', slot);
+        await slot.save();
+
+        // Create parking log entry
+        if (occupied) {
+            const parkingLog = new ParkingLog({
+                userId: userId,
+                slotId: slot._id,
+                vehicleDetails: {
+                    licensePlate: `SIM${slotId}`,
+                    vehicleType: 'car'
+                },
+                entryTime: new Date(),
+                status: 'active'
+            });
+            console.log('Creating parking log:', parkingLog);
+            await parkingLog.save();
+        }
+
+        res.json({ 
+            success: true, 
+            slot: {
+                id: slot.slotNumber,
+                status: slot.status,
+                lastUpdated: new Date()
+            }
+        });
+    } catch (error) {
+        console.error('Error in simulate-slot:', error);
+        res.status(500).json({ 
+            error: 'Failed to update slot status',
+            details: error.message 
+        });
+    }
+});
+
+// Get current status of all slots
+app.get('/api/slots/status', authenticateToken, async (req, res) => {
+    try {
+        const slots = await ParkingSlot.find().sort({ slotNumber: 1 });
+        res.json(slots.map(slot => ({
+            id: slot.slotNumber,
+            occupied: slot.status === 'occupied',
+            lastUpdated: slot.currentVehicle?.entryTime || new Date()
+        })));
+    } catch (error) {
+        console.error('Error fetching slot status:', error);
+        res.status(500).json({ error: 'Failed to fetch slot status' });
+    }
+});
+
 // Parking Database Simulation
 const parkingDatabase = {
     parkingEvents: [],
@@ -666,20 +774,6 @@ const parkingDatabase = {
     }
 };
 
-// Modify existing vehicle detection routes to record events
-app.post('/api/simulate-slot/:slotId', authenticateToken, (req, res) => {
-    const { slotId } = req.params;
-    const { occupied } = req.body;
-
-    // Record parking event in the database
-    parkingDatabase.recordParkingEvent(slotId, occupied);
-
-    // Existing simulation logic
-    // ... (previous implementation)
-
-    res.json({ success: true });
-});
-
 // Reporting Routes
 app.get('/api/reports/daily', authenticateToken, (req, res) => {
     try {
@@ -698,6 +792,87 @@ app.get('/api/reports/daily', authenticateToken, (req, res) => {
     } catch (error) {
         console.error('Daily report generation error:', error);
         res.status(500).json({ error: 'Failed to generate report' });
+    }
+});
+
+// PDF Report Generation
+app.get('/api/reports/pdf', authenticateToken, async (req, res) => {
+    try {
+        const date = req.query.date ? new Date(req.query.date) : new Date();
+        const parkingData = await ParkingLog.find({
+            entryTime: {
+                $gte: new Date(date.setHours(0, 0, 0, 0)),
+                $lt: new Date(date.setHours(23, 59, 59, 999))
+            }
+        }).populate('userId', 'username').exec();
+
+        // Format data for PDF
+        const formattedData = parkingData.map(log => ({
+            slotId: log.slotId,
+            entryTime: log.entryTime.toLocaleString(),
+            exitTime: log.exitTime ? log.exitTime.toLocaleString() : 'N/A',
+            duration: log.exitTime ? 
+                Math.round((log.exitTime - log.entryTime) / (1000 * 60)) + ' minutes' : 
+                'Still parked',
+            user: log.userId ? log.userId.username : 'Unknown'
+        }));
+
+        // Calculate summary
+        const summary = {
+            totalParking: parkingData.length,
+            averageDuration: parkingData.reduce((acc, log) => {
+                if (log.exitTime) {
+                    return acc + (log.exitTime - log.entryTime) / (1000 * 60);
+                }
+                return acc;
+            }, 0) / parkingData.length || 0
+        };
+
+        res.json({
+            date: date.toLocaleDateString(),
+            summary,
+            details: formattedData
+        });
+    } catch (error) {
+        console.error('PDF report generation error:', error);
+        res.status(500).json({ error: 'Failed to generate PDF report' });
+    }
+});
+
+// CSV Report Generation
+app.get('/api/reports/csv', authenticateToken, async (req, res) => {
+    try {
+        const date = req.query.date ? new Date(req.query.date) : new Date();
+        const parkingData = await ParkingLog.find({
+            entryTime: {
+                $gte: new Date(date.setHours(0, 0, 0, 0)),
+                $lt: new Date(date.setHours(23, 59, 59, 999))
+            }
+        }).populate('userId', 'username').exec();
+
+        // Create CSV content
+        const csvRows = [];
+        csvRows.push(['Slot ID', 'Entry Time', 'Exit Time', 'Duration (minutes)', 'User']);
+
+        parkingData.forEach(log => {
+            csvRows.push([
+                log.slotId,
+                log.entryTime.toLocaleString(),
+                log.exitTime ? log.exitTime.toLocaleString() : 'N/A',
+                log.exitTime ? Math.round((log.exitTime - log.entryTime) / (1000 * 60)) : 'N/A',
+                log.userId ? log.userId.username : 'Unknown'
+            ]);
+        });
+
+        // Set headers for CSV download
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=parking-report-${date.toISOString().split('T')[0]}.csv`);
+
+        // Send CSV content
+        res.send(csvRows.map(row => row.join(',')).join('\n'));
+    } catch (error) {
+        console.error('CSV report generation error:', error);
+        res.status(500).json({ error: 'Failed to generate CSV report' });
     }
 });
 
@@ -809,7 +984,349 @@ app.get('/api/reports/csv', (req, res) => {
     }
 });
 
+// Analytics Routes
+app.get('/api/analytics/:period', authenticateToken, async (req, res) => {
+    try {
+        const period = req.params.period; // 'day', 'week', or 'month'
+        const now = new Date();
+        let startDate;
+        
+        // Set time range based on period
+        switch (period) {
+            case 'day':
+                startDate = new Date(now.setHours(0, 0, 0, 0));
+                break;
+            case 'week':
+                startDate = new Date(now.setDate(now.getDate() - 7));
+                break;
+            case 'month':
+                startDate = new Date(now.setMonth(now.getMonth() - 1));
+                break;
+            default:
+                throw new Error('Invalid period');
+        }
+
+        // Fetch parking data
+        const parkingData = await ParkingLog.find({
+            entryTime: { $gte: startDate }
+        }).populate('userId', 'username').exec();
+
+        // Calculate KPIs
+        const totalVehicles = parkingData.length;
+        const avgDuration = calculateAverageDuration(parkingData);
+        const occupancyRate = calculateOccupancyRate(parkingData);
+        const { peakHour, peakHourVehicles } = findPeakHour(parkingData);
+
+        // Calculate trends (comparing with previous period)
+        const previousPeriodData = await ParkingLog.find({
+            entryTime: {
+                $gte: new Date(startDate.getTime() - (startDate - now)),
+                $lt: startDate
+            }
+        }).exec();
+
+        const trends = calculateTrends(parkingData, previousPeriodData);
+
+        // Generate timeline data
+        const occupancyTimeline = generateOccupancyTimeline(parkingData);
+        
+        // Generate slot distribution data
+        const slotDistribution = await generateSlotDistribution(parkingData);
+        
+        // Generate hourly statistics
+        const hourlyStats = generateHourlyStats(parkingData);
+
+        res.json({
+            totalVehicles,
+            avgDuration,
+            occupancyRate,
+            peakHour,
+            peakHourVehicles,
+            ...trends,
+            occupancyTimeline,
+            slotDistribution,
+            hourlyStats
+        });
+
+    } catch (error) {
+        console.error('Analytics error:', error);
+        res.status(500).json({ error: 'Failed to generate analytics' });
+    }
+});
+
+// Analytics Helper Functions
+function calculateAverageDuration(parkingData) {
+    const completedParkings = parkingData.filter(log => log.exitTime);
+    if (completedParkings.length === 0) return 0;
+    
+    const totalDuration = completedParkings.reduce((acc, log) => {
+        return acc + (log.exitTime - log.entryTime);
+    }, 0);
+    
+    return totalDuration / completedParkings.length / (1000 * 60); // Convert to minutes
+}
+
+function calculateOccupancyRate(parkingData) {
+    const totalSlots = 6;
+    const totalMinutes = 24 * 60;
+    const occupiedMinutes = parkingData.reduce((acc, log) => {
+        const duration = log.exitTime ? 
+            (log.exitTime - log.entryTime) : 
+            (new Date() - log.entryTime);
+        return acc + duration / (1000 * 60);
+    }, 0);
+    
+    return (occupiedMinutes / (totalSlots * totalMinutes)) * 100;
+}
+
+function findPeakHour(parkingData) {
+    const hourlyCount = new Array(24).fill(0);
+    
+    parkingData.forEach(log => {
+        const hour = log.entryTime.getHours();
+        hourlyCount[hour]++;
+    });
+    
+    const peakHour = hourlyCount.indexOf(Math.max(...hourlyCount));
+    return {
+        peakHour: `${peakHour.toString().padStart(2, '0')}:00`,
+        peakHourVehicles: hourlyCount[peakHour]
+    };
+}
+
+function calculateTrends(currentData, previousData) {
+    const calculateTrend = (current, previous) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return ((current - previous) / previous) * 100;
+    };
+    
+    return {
+        vehiclesTrend: calculateTrend(currentData.length, previousData.length),
+        durationTrend: calculateTrend(
+            calculateAverageDuration(currentData),
+            calculateAverageDuration(previousData)
+        ),
+        occupancyTrend: calculateTrend(
+            calculateOccupancyRate(currentData),
+            calculateOccupancyRate(previousData)
+        )
+    };
+}
+
+function generateOccupancyTimeline(parkingData) {
+    const timeLabels = [];
+    const occupancyValues = [];
+    const now = new Date();
+    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+    
+    // Generate hourly labels
+    for (let i = 0; i < 24; i++) {
+        timeLabels.push(`${i.toString().padStart(2, '0')}:00`);
+        const hourStart = new Date(startOfDay);
+        hourStart.setHours(i);
+        const hourEnd = new Date(hourStart);
+        hourEnd.setHours(i + 1);
+        
+        // Count occupied slots during this hour
+        const occupiedSlots = parkingData.filter(log => {
+            return log.entryTime <= hourEnd && 
+                (!log.exitTime || log.exitTime >= hourStart);
+        }).length;
+        
+        occupancyValues.push(occupiedSlots);
+    }
+    
+    return {
+        labels: timeLabels,
+        values: occupancyValues
+    };
+}
+
+async function generateSlotDistribution(parkingData) {
+    const slots = await ParkingSlot.find().exec();
+    const slotUsage = slots.map(slot => ({
+        label: `Slot ${slot.slotNumber}`,
+        value: parkingData.filter(log => 
+            log.slotId.toString() === slot._id.toString()
+        ).length
+    }));
+    
+    return {
+        labels: slotUsage.map(slot => slot.label),
+        values: slotUsage.map(slot => slot.value)
+    };
+}
+
+function generateHourlyStats(parkingData) {
+    const hourlyStats = [];
+    
+    for (let hour = 0; hour < 24; hour++) {
+        const hourStart = new Date();
+        hourStart.setHours(hour, 0, 0, 0);
+        const hourEnd = new Date(hourStart);
+        hourEnd.setHours(hour + 1);
+        
+        const hourlyParkings = parkingData.filter(log => 
+            log.entryTime >= hourStart && log.entryTime < hourEnd
+        );
+        
+        const avgDuration = calculateAverageDuration(hourlyParkings);
+        const occupancyRate = calculateOccupancyRate(hourlyParkings);
+        
+        // Calculate trend (compare with previous hour)
+        const previousHourParkings = parkingData.filter(log => {
+            const prevHourStart = new Date(hourStart);
+            prevHourStart.setHours(hour - 1);
+            return log.entryTime >= prevHourStart && log.entryTime < hourStart;
+        });
+        
+        const trend = calculateTrends(hourlyParkings, previousHourParkings).vehiclesTrend;
+        
+        hourlyStats.push({
+            hour: hour.toString().padStart(2, '0'),
+            vehicles: hourlyParkings.length,
+            avgDuration,
+            occupancyRate,
+            trend
+        });
+    }
+    
+    return hourlyStats;
+}
+
+// Get user role
+app.get('/api/user/role', authenticateToken, (req, res) => {
+    res.json({ role: req.user.role });
+});
+
+// Get all slots status
+app.get('/api/slots', authenticateToken, async (req, res) => {
+    try {
+        const slots = await ParkingSlot.find().sort('slotNumber');
+        res.json(slots.map(slot => ({
+            slotNumber: slot.slotNumber,
+            status: slot.status,
+            lastUpdated: slot.sensorData?.lastUpdated
+        })));
+    } catch (error) {
+        console.error('Error fetching slots:', error);
+        res.status(500).json({ error: 'Failed to fetch slots' });
+    }
+});
+
+// Get session timeout configuration
+app.get('/api/config/session-timeout', authenticateToken, (req, res) => {
+    res.json({
+        warningTime: SessionTimeoutConfig.warningTime,
+        logoutTime: SessionTimeoutConfig.logoutTime
+    });
+});
+
+// Get Arduino connection status
+app.get('/api/arduino-status', authenticateToken, (req, res) => {
+    res.json({ connected: arduinoPort.isOpen });
+});
+
+// Get analytics data
+app.get('/api/analytics/:period', authenticateToken, async (req, res) => {
+    try {
+        const { period } = req.params;
+        const now = new Date();
+        let startDate;
+
+        // Calculate start date based on period
+        switch (period) {
+            case 'day':
+                startDate = new Date(now.setHours(0, 0, 0, 0));
+                break;
+            case 'week':
+                startDate = new Date(now.setDate(now.getDate() - 7));
+                break;
+            case 'month':
+                startDate = new Date(now.setMonth(now.getMonth() - 1));
+                break;
+            default:
+                return res.status(400).json({ error: 'Invalid period' });
+        }
+
+        // Get parking data for the period
+        const parkingData = await ParkingLog.find({
+            timestamp: { $gte: startDate }
+        }).sort('timestamp');
+
+        // Get previous period data for trends
+        const previousStartDate = new Date(startDate);
+        previousStartDate.setDate(previousStartDate.getDate() - (period === 'day' ? 1 : period === 'week' ? 7 : 30));
+        
+        const previousParkingData = await ParkingLog.find({
+            timestamp: { 
+                $gte: previousStartDate,
+                $lt: startDate
+            }
+        });
+
+        // Calculate analytics
+        const avgDuration = calculateAverageDuration(parkingData);
+        const prevAvgDuration = calculateAverageDuration(previousParkingData);
+        const occupancyRate = calculateOccupancyRate(parkingData);
+        const prevOccupancyRate = calculateOccupancyRate(previousParkingData);
+        const { hour: peakHour, vehicles: peakHourVehicles } = findPeakHour(parkingData);
+        const totalVehicles = parkingData.length;
+        const prevTotalVehicles = previousParkingData.length;
+
+        // Calculate trends
+        const trends = calculateTrends(
+            { totalVehicles, avgDuration, occupancyRate },
+            { totalVehicles: prevTotalVehicles, avgDuration: prevAvgDuration, occupancyRate: prevOccupancyRate }
+        );
+
+        // Generate timeline and distribution data
+        const occupancyTimeline = generateOccupancyTimeline(parkingData, period);
+        const slotDistribution = generateSlotDistribution(parkingData);
+
+        res.json({
+            totalVehicles,
+            vehiclesTrend: trends.totalVehicles,
+            avgDuration,
+            durationTrend: trends.avgDuration,
+            occupancyRate,
+            occupancyTrend: trends.occupancyRate,
+            peakHour,
+            peakHourVehicles,
+            occupancyTimeline,
+            slotDistribution
+        });
+    } catch (error) {
+        console.error('Error generating analytics:', error);
+        res.status(500).json({ error: 'Failed to generate analytics' });
+    }
+});
+
+// API endpoint to get client config
+app.get('/api/client-config', authenticateToken, (req, res) => {
+    res.json({
+        sessionTimeout: {
+            timeoutMinutes: process.env.SESSION_TIMEOUT_MINUTES || 30,
+            gracePeriodSeconds: process.env.GRACE_PERIOD_SECONDS || 30
+        },
+        features: {
+            showVehicleSimulation: process.env.SHOW_VEHICLE_SIMULATION_CONTROLS === 'true'
+        }
+    });
+});
+
+// Config endpoint
+app.get('/api/config', authenticateToken, (req, res) => {
+    res.json({
+        showVehicleSimulationControls: process.env.SHOW_VEHICLE_SIMULATION_CONTROLS === 'true',
+        sessionTimeout: parseInt(process.env.SESSION_TIMEOUT_MINUTES) || 30,
+        gracePeriod: parseInt(process.env.GRACE_PERIOD_SECONDS) || 30
+    });
+});
+
 // Start the server
-app.listen(port, () => {
+app.listen(port, async () => {
+    await connectDB();
+    await initializeParkingSlots();
     console.log(`Parking Slot Management running at http://localhost:${port}`);
 });

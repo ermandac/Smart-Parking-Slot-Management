@@ -11,13 +11,14 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Custom Styles -->
-    <link rel="stylesheet" href="css/styles.css">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/analytics.css" rel="stylesheet">
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
             <a class="navbar-brand" href="#">
                 <i class="fas fa-parking me-2"></i>Smart Parking System
             </a>
@@ -25,19 +26,16 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="index.html">
                             <i class="fas fa-home me-1"></i>Dashboard
                         </a>
                     </li>
-                    <li class="nav-item active">
-                        <a class="nav-link" href="admin.html">
-                            <i class="fas fa-cog me-1"></i>Admin
-                        </a>
-                    </li>
+                </ul>
+                <ul class="navbar-nav">
                     <li class="nav-item">
-                        <button id="logoutButton" class="nav-link btn btn-link text-white">
+                        <button id="logoutButton" class="nav-link btn btn-link text-white" onclick="logout()">
                             <i class="fas fa-sign-out-alt me-1"></i>Logout
                         </button>
                     </li>
@@ -52,7 +50,7 @@
             <!-- Parking Status Overview -->
             <div class="col-md-4">
                 <div class="card mb-4">
-                    <div class="card-header bg-success text-white">
+                    <div class="card-header bg-dark text-white">
                         <i class="fas fa-chart-pie me-2"></i>Parking Status
                     </div>
                     <div class="card-body">
@@ -73,7 +71,7 @@
 
                 <!-- Connection Status -->
                 <div class="card">
-                    <div class="card-header bg-info text-white">
+                    <div class="card-header bg-dark text-white">
                         <i class="fas fa-plug me-2"></i>System Status
                     </div>
                     <div class="card-body">
@@ -90,11 +88,11 @@
             <!-- Parking Layout -->
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-dark text-white">
                         <i class="fas fa-parking me-2"></i>Parking Layout
                     </div>
                     <div class="card-body">
-                        <div class="row g-3" id="parkingSlots">
+                        <div class="row g-3" id="parkingSlotsGrid">
                             <div class="col-md-4 parking-slot" id="slot-1">
                                 <div class="card">
                                     <div class="card-body text-center">
@@ -105,56 +103,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-4 parking-slot" id="slot-2">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-car-side fa-3x car-icon text-muted mb-3"></i>
-                                        <h5 class="card-title">Parking Slot 2</h5>
-                                        <p class="card-text status-text text-success">Available</p>
-                                        <small class="text-muted timestamp d-block mt-2" id="slot-2-timestamp"></small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 parking-slot" id="slot-3">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-car-side fa-3x car-icon text-muted mb-3"></i>
-                                        <h5 class="card-title">Parking Slot 3</h5>
-                                        <p class="card-text status-text text-success">Available</p>
-                                        <small class="text-muted timestamp d-block mt-2" id="slot-3-timestamp"></small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 parking-slot" id="slot-4">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-car-side fa-3x car-icon text-muted mb-3"></i>
-                                        <h5 class="card-title">Parking Slot 4</h5>
-                                        <p class="card-text status-text text-success">Available</p>
-                                        <small class="text-muted timestamp d-block mt-2" id="slot-4-timestamp"></small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 parking-slot" id="slot-5">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-car-side fa-3x car-icon text-muted mb-3"></i>
-                                        <h5 class="card-title">Parking Slot 5</h5>
-                                        <p class="card-text status-text text-success">Available</p>
-                                        <small class="text-muted timestamp d-block mt-2" id="slot-5-timestamp"></small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4 parking-slot" id="slot-6">
-                                <div class="card">
-                                    <div class="card-body text-center">
-                                        <i class="fas fa-car-side fa-3x car-icon text-muted mb-3"></i>
-                                        <h5 class="card-title">Parking Slot 6</h5>
-                                        <p class="card-text status-text text-success">Available</p>
-                                        <small class="text-muted timestamp d-block mt-2" id="slot-6-timestamp"></small>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- More slots will be populated dynamically -->
                         </div>
                     </div>
                 </div>
@@ -162,164 +111,180 @@
         </div>
 
         <!-- Vehicle Simulation Controls -->
-        <div id="vehicleSimulationControls" class="d-none">
-            <div class="container mt-4">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <i class="fas fa-car-alt me-2"></i>Vehicle Simulation
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <h5>Parking Slot Simulation</h5>
-                                <p class="text-muted">Simulate vehicle detection for parking slots</p>
-                            </div>
-                        </div>
-                        
-                        <!-- Occupy Slot Buttons -->
-                        <div class="row g-2">
-                            <div class="col-md-2">
-                                <button onclick="simulateVehicleDetection(1)" class="btn btn-outline-success w-100">
-                                    <i class="fas fa-car me-2"></i>Slot 1 Occupied
-                                </button>
-                            </div>
-                            <div class="col-md-2">
-                                <button onclick="simulateVehicleDetection(2)" class="btn btn-outline-success w-100">
-                                    <i class="fas fa-car me-2"></i>Slot 2 Occupied
-                                </button>
-                            </div>
-                            <div class="col-md-2">
-                                <button onclick="simulateVehicleDetection(3)" class="btn btn-outline-success w-100">
-                                    <i class="fas fa-car me-2"></i>Slot 3 Occupied
-                                </button>
-                            </div>
-                            <div class="col-md-2">
-                                <button onclick="simulateVehicleDetection(4)" class="btn btn-outline-success w-100">
-                                    <i class="fas fa-car me-2"></i>Slot 4 Occupied
-                                </button>
-                            </div>
-                            <div class="col-md-2">
-                                <button onclick="simulateVehicleDetection(5)" class="btn btn-outline-success w-100">
-                                    <i class="fas fa-car me-2"></i>Slot 5 Occupied
-                                </button>
-                            </div>
-                            <div class="col-md-2">
-                                <button onclick="simulateVehicleDetection(6)" class="btn btn-outline-success w-100">
-                                    <i class="fas fa-car me-2"></i>Slot 6 Occupied
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Other simulation buttons -->
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <button onclick="simulateAllOccupied()" class="btn btn-warning me-2">
-                                    <i class="fas fa-parking me-2"></i>Occupy All Slots
-                                </button>
-                                <button onclick="simulateAllAvailable()" class="btn btn-success">
-                                    <i class="fas fa-check-circle me-2"></i>Clear All Slots
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+        <div class="container mt-4 vehicle-simulation-controls">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <i class="fas fa-car-alt me-2"></i>Vehicle Simulation
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reports Section -->
-    <div class="container mt-4">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <i class="fas fa-chart-bar me-2"></i>Parking Reports
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-file-pdf fa-3x text-danger mb-3"></i>
-                                <h5 class="card-title">PDF Report</h5>
-                                <button onclick="generateReport('pdf')" class="btn btn-outline-danger">
-                                    Generate PDF
-                                </button>
-                            </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h5>Parking Slot Simulation</h5>
+                            <p class="text-muted">Simulate vehicle detection for parking slots</p>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-file-csv fa-3x text-success mb-3"></i>
-                                <h5 class="card-title">CSV Report</h5>
-                                <button onclick="generateReport('csv')" class="btn btn-outline-success">
-                                    Generate CSV
-                                </button>
-                            </div>
+                    
+                    <!-- Occupy Slot Buttons -->
+                    <div class="row g-2">
+                        <div class="col-md-2">
+                            <button onclick="simulateVehicleDetection(1)" class="btn btn-outline-success w-100">
+                                <i class="fas fa-car me-2"></i>Slot 1
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="simulateVehicleDetection(2)" class="btn btn-outline-success w-100">
+                                <i class="fas fa-car me-2"></i>Slot 2
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="simulateVehicleDetection(3)" class="btn btn-outline-success w-100">
+                                <i class="fas fa-car me-2"></i>Slot 3
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="simulateVehicleDetection(4)" class="btn btn-outline-success w-100">
+                                <i class="fas fa-car me-2"></i>Slot 4
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="simulateVehicleDetection(5)" class="btn btn-outline-success w-100">
+                                <i class="fas fa-car me-2"></i>Slot 5
+                            </button>
+                        </div>
+                        <div class="col-md-2">
+                            <button onclick="simulateVehicleDetection(6)" class="btn btn-outline-success w-100">
+                                <i class="fas fa-car me-2"></i>Slot 6
+                            </button>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-chart-pie fa-3x text-primary mb-3"></i>
-                                <h5 class="card-title">Daily Analytics</h5>
-                                <button onclick="viewDailyAnalytics()" class="btn btn-outline-primary">
-                                    View Analytics
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Session Timeout Modal -->
-    <div id="sessionTimeoutModal" class="modal fade" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-warning">
-                <div class="modal-body text-center p-4">
-                    <div class="mb-3">
-                        <i class="fas fa-clock text-warning fs-2 mb-3"></i>
-                        <h5 class="mb-2">Session Timing Out</h5>
-                        <p class="text-muted mb-3">You'll be logged out in <span id="countdownTimer" class="fw-bold text-dark"></span></p>
-                    </div>
-                    <div class="d-flex justify-content-center gap-2">
-                        <button type="button" class="btn btn-secondary" id="logoutModalButton">
-                            Logout
-                        </button>
-                        <button type="button" class="btn btn-primary" id="extendSessionButton">
-                            Continue Session
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Analytics Modal -->
-    <div class="modal fade" id="analyticsModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="fas fa-chart-pie me-2"></i>Daily Parking Analytics
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
+                    
+                    <!-- Bulk Actions -->
+                    <div class="row mt-3">
                         <div class="col-md-6">
-                            <h6>Total Occupancies</h6>
-                            <p id="totalOccupancies" class="h4 text-primary"></p>
+                            <button onclick="simulateAllOccupied()" class="btn btn-danger w-100">
+                                <i class="fas fa-car me-2"></i>Simulate All Occupied
+                            </button>
                         </div>
                         <div class="col-md-6">
+                            <button onclick="simulateAllAvailable()" class="btn btn-success w-100">
+                                <i class="fas fa-parking me-2"></i>Simulate All Available
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="container mt-4">
+            <!-- Analytics Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">Parking Analytics</h4>
+                <div class="d-flex align-items-center">
+                    <label class="me-3 mb-0">Time Period:</label>
+                    <select class="form-select w-auto" id="timePeriodSelect">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- KPI Cards Row -->
+            <div class="row g-3 mb-4">
+                <!-- Total Vehicles -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card kpi-card">
+                        <div class="card-body">
+                            <h6>Total Vehicles</h6>
+                            <h2 id="totalVehicles">0</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Average Duration -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card kpi-card">
+                        <div class="card-body">
+                            <h6>Average Duration</h6>
+                            <h2 id="avgDuration">0 min</h2>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Occupancy Rate -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card kpi-card">
+                        <div class="card-body">
                             <h6>Occupancy Rate</h6>
-                            <p id="occupancyRate" class="h4 text-success"></p>
+                            <h2 id="occupancyRate">0%</h2>
                         </div>
                     </div>
-                    <hr>
-                    <h6>Peak Hours</h6>
-                    <ul id="peakHoursList" class="list-unstyled"></ul>
+                </div>
+
+                <!-- Peak Hour -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card kpi-card">
+                        <div class="card-body">
+                            <h6>Peak Hour</h6>
+                            <h2 id="peakHour">--:--</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row g-3">
+                <!-- Occupancy Timeline -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Occupancy Timeline</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="occupancyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slot Distribution -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Slot Usage Distribution</h6>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="slotDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Hourly Statistics</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table stats-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Hour</th>
+                                            <th>Total Vehicles</th>
+                                            <th>Average Duration</th>
+                                            <th>Occupancy Rate</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="statsTableBody">
+                                        <!-- Table rows will be dynamically populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -336,282 +301,12 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS and Dependencies -->
+    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-    // Vehicle Simulation Functions
-    function simulateVehicleDetection(slotId, isOccupied = true) {
-        const slotElement = document.getElementById(`slot-${slotId}`);
-        const carIcon = slotElement.querySelector('.car-icon');
-        const statusText = slotElement.querySelector('.status-text');
-        const timestampElement = document.getElementById(`slot-${slotId}-timestamp`);
-
-        // Send simulation data to server
-        fetch(`/api/simulate-slot/${slotId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: JSON.stringify({ occupied: isOccupied })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Simulation failed');
-            }
-            return response.json();
-        })
-        .then(() => {
-            // Update UI
-            if (isOccupied) {
-                carIcon.classList.remove('text-muted');
-                carIcon.classList.add('text-success');
-                statusText.textContent = 'Occupied';
-                statusText.classList.remove('text-success');
-                statusText.classList.add('text-danger');
-                
-                // Set timestamp when occupied
-                const now = new Date();
-                timestampElement.textContent = `Occupied at ${now.toLocaleTimeString()}`;
-            } else {
-                carIcon.classList.add('text-muted');
-                carIcon.classList.remove('text-success');
-                statusText.textContent = 'Available';
-                statusText.classList.add('text-success');
-                statusText.classList.remove('text-danger');
-                
-                // Clear timestamp when available
-                timestampElement.textContent = '';
-            }
-        })
-        .catch(error => {
-            console.error('Simulation error:', error);
-            alert('Failed to simulate vehicle detection');
-        });
-    }
-
-    function simulateAllOccupied() {
-        for (let i = 1; i <= 6; i++) {
-            simulateVehicleDetection(i, true);
-        }
-    }
-
-    function simulateAllAvailable() {
-        for (let i = 1; i <= 6; i++) {
-            simulateVehicleDetection(i, false);
-        }
-    }
-
-    // Session Timeout Management
-    document.addEventListener('DOMContentLoaded', function() {
-        let timeoutId;
-        let warningTimerId;
-        const sessionTimeoutModal = new bootstrap.Modal(document.getElementById('sessionTimeoutModal'));
-        const countdownTimer = document.getElementById('countdownTimer');
-
-        // Function to update slot status and timestamp
-        function updateSlotStatus(slotId, isOccupied) {
-            const slotElement = document.getElementById(`slot-${slotId}`);
-            const carIcon = slotElement.querySelector('.car-icon');
-            const statusText = slotElement.querySelector('.status-text');
-            const timestampElement = document.getElementById(`slot-${slotId}-timestamp`);
-
-            if (isOccupied) {
-                carIcon.classList.remove('text-muted');
-                carIcon.classList.add('text-success');
-                statusText.textContent = 'Occupied';
-                statusText.classList.remove('text-success');
-                statusText.classList.add('text-danger');
-                
-                // Set timestamp when occupied
-                const now = new Date();
-                timestampElement.textContent = `Occupied at ${now.toLocaleTimeString()}`;
-            } else {
-                carIcon.classList.add('text-muted');
-                carIcon.classList.remove('text-success');
-                statusText.textContent = 'Available';
-                statusText.classList.add('text-success');
-                statusText.classList.remove('text-danger');
-                
-                // Clear timestamp when available
-                timestampElement.textContent = '';
-            }
-        }
-
-        // Fetch session timeout configuration
-        fetch('/api/config/session-timeout')
-            .then(response => response.json())
-            .then(config => {
-                const { timeoutMinutes, gracePeriodSeconds } = config;
-                const timeoutMs = timeoutMinutes * 60 * 1000;
-                const warningMs = timeoutMs - (gracePeriodSeconds * 1000);
-
-                console.log('Session Timeout Config:', { timeoutMs, warningMs });
-
-                // Reset timers on user activity
-                function resetTimers() {
-                    clearTimeout(timeoutId);
-                    clearTimeout(warningTimerId);
-                    
-                    // Set new timeout
-                    timeoutId = setTimeout(showTimeoutWarning, warningMs);
-                    console.log('Timers reset. Next warning in:', warningMs/1000, 'seconds');
-                }
-
-                // Show timeout warning modal
-                function showTimeoutWarning() {
-                    let remainingSeconds = gracePeriodSeconds;
-                    
-                    // Update countdown
-                    function updateCountdown() {
-                        countdownTimer.textContent = `${remainingSeconds} seconds`;
-                        
-                        if (remainingSeconds > 0) {
-                            remainingSeconds--;
-                            setTimeout(updateCountdown, 1000);
-                        } else {
-                            // Force logout after grace period
-                            logout();
-                        }
-                    }
-
-                    // Show modal and start countdown
-                    sessionTimeoutModal.show();
-                    updateCountdown();
-                }
-
-                // Extend session
-                document.getElementById('extendSessionButton').addEventListener('click', () => {
-                    // Call server to refresh token
-                    fetch('/api/auth/refresh-token', { 
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
-                        }
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            return response.json();
-                        }
-                        throw new Error('Token refresh failed');
-                    })
-                    .then(data => {
-                        // Update token in localStorage
-                        localStorage.setItem('token', data.token);
-                        sessionTimeoutModal.hide();
-                        resetTimers();
-                    })
-                    .catch(logout);
-                });
-
-                // Logout button
-                document.getElementById('logoutModalButton').addEventListener('click', logout);
-
-                // Track user activity
-                const activityEvents = ['mousemove', 'keydown', 'scroll', 'click'];
-                activityEvents.forEach(event => {
-                    document.addEventListener(event, resetTimers, { passive: true });
-                });
-
-                // Initial timeout setup
-                resetTimers();
-            })
-            .catch(error => {
-                console.error('Session timeout configuration error:', error);
-            });
-
-        // Logout function
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            window.location.href = '/login.html';
-        }
-    });
-    </script>
-
-    <!-- Vehicle Simulation Controls Visibility -->
-    <script>
-        // Check vehicle simulation controls visibility
-        fetch('/api/config/vehicle-controls')
-            .then(response => response.json())
-            .then(config => {
-                const simulationControls = document.getElementById('vehicleSimulationControls');
-                if (simulationControls) {
-                    if (config.isVisible) {
-                        simulationControls.classList.remove('d-none');
-                    } else {
-                        simulationControls.classList.add('d-none');
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching vehicle controls configuration:', error);
-            });
-    </script>
-
-    <script>
-    // Report Generation Functions
-    function generateReport(type) {
-        fetch(`/api/reports/${type}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Report generation failed');
-            }
-            return response.blob();
-        })
-        .then(blob => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `parking_report.${type}`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-        })
-        .catch(error => {
-            console.error('Report generation error:', error);
-            alert('Failed to generate report. Please try again.');
-        });
-    }
-
-    function viewDailyAnalytics() {
-        fetch('/api/reports/daily', {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Create a modal to display analytics
-            const analyticsModal = new bootstrap.Modal(document.getElementById('analyticsModal'));
-            
-            // Populate modal with analytics data
-            document.getElementById('totalOccupancies').textContent = data.totalOccupancies;
-            document.getElementById('occupancyRate').textContent = `${data.averageOccupancyRate.toFixed(2)}%`;
-            
-            // Populate peak hours
-            const peakHoursList = document.getElementById('peakHoursList');
-            peakHoursList.innerHTML = ''; // Clear previous entries
-            data.peakHours.forEach(peak => {
-                const li = document.createElement('li');
-                li.textContent = `Hour ${peak.hour}: ${peak.occupancyCount} occupancies`;
-                peakHoursList.appendChild(li);
-            });
-
-            analyticsModal.show();
-        })
-        .catch(error => {
-            console.error('Analytics fetch error:', error);
-            alert('Failed to fetch daily analytics.');
-        });
-    }
-    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script src="js/admin.js"></script>
+    <script src="js/analytics.js"></script>
 </body>
 </html>

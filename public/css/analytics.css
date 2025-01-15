@@ -1,0 +1,230 @@
+/* Analytics Dashboard Styles */
+
+/* Dark Theme Colors */
+:root {
+    --dark-bg: #1a1a1a;
+    --dark-card: #2d2d2d;
+    --dark-header: #363636;
+    --dark-text: #e0e0e0;
+    --dark-text-muted: #a0a0a0;
+    --dark-border: #404040;
+    --dark-hover: #404040;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--dark-text);
+}
+
+/* Card Styles */
+.card {
+    background-color: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.2);
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    background-color: var(--dark-header) !important;
+    border-bottom: 1px solid var(--dark-border);
+    color: var(--dark-text);
+    padding: 1rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.card-title, .card-text {
+    color: var(--dark-text);
+}
+
+/* Overview Cards */
+.bg-light {
+    background-color: var(--dark-header) !important;
+    color: var(--dark-text) !important;
+}
+
+.text-muted {
+    color: var(--dark-text-muted) !important;
+}
+
+/* Chart Containers */
+.chart-container {
+    position: relative;
+    min-height: 300px;
+    background-color: var(--dark-card);
+}
+
+canvas {
+    max-width: 100%;
+}
+
+/* Table Styles */
+.table {
+    color: var(--dark-text);
+    margin-bottom: 0;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    color: var(--dark-text-muted);
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 0.875rem;
+    border-color: var(--dark-border);
+}
+
+/* Form Controls */
+.form-select {
+    min-width: 150px;
+    font-size: 0.875rem;
+    background-color: var(--dark-card);
+    border-color: var(--dark-border);
+    color: var(--dark-text);
+}
+
+.form-select:focus {
+    background-color: var(--dark-card);
+    border-color: #0d6efd;
+    color: var(--dark-text);
+}
+
+/* Toast Notification */
+.toast {
+    background-color: var(--dark-card);
+    border: 1px solid var(--dark-border);
+}
+
+.toast-header {
+    background-color: var(--dark-header);
+    color: var(--dark-text);
+    border-bottom: 1px solid var(--dark-border);
+}
+
+/* KPI Card Styles */
+.kpi-card {
+    background-color: var(--dark-card);
+    border: 1px solid var(--dark-border);
+}
+
+.kpi-card h6 {
+    color: var(--dark-text-muted);
+}
+
+.kpi-card h2 {
+    color: var(--dark-text);
+}
+
+/* Chart Card Styles */
+.chart-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.chart-card .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1.5rem;
+}
+
+/* Table Card Styles */
+.table-card {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.table-card .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1.5rem;
+}
+
+/* Stats Table Styles */
+.stats-table th {
+    background-color: var(--dark-header);
+}
+
+.stats-table td {
+    background-color: var(--dark-card);
+}
+
+/* Navigation */
+.navbar {
+    background-color: #0d47a1 !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--dark-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--dark-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--dark-hover);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+
+    h3.card-text {
+        font-size: 1.5rem;
+    }
+
+    .table-responsive {
+        margin: 0 -1rem;
+        padding: 0 1rem;
+    }
+
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* Analytics Specific Styles */
+.analytics-period .btn {
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.analytics-period .btn:hover {
+    color: white;
+    border-color: white;
+}
+
+.analytics-period .btn.active {
+    color: white;
+    border-color: white;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Button Styles */
+.btn-outline-success {
+    border-color: #198754;
+    color: #198754;
+}
+
+.btn-outline-success:hover {
+    background-color: #198754;
+    color: var(--dark-text);
+}

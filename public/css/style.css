@@ -1,0 +1,59 @@
+/* General Styles */
+body {
+    min-height: 100vh;
+}
+
+/* Parking Slot Styles */
+.parking-slot .card {
+    transition: all 0.3s ease;
+}
+
+.parking-slot .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.car-icon {
+    transition: color 0.3s ease;
+}
+
+/* Button Styles */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* Status Badge Styles */
+.badge {
+    padding: 0.5em 0.75em;
+    font-weight: 500;
+}
+
+/* Toast Styles */
+.toast-container {
+    z-index: 1050;
+}
+
+/* Session Warning Modal */
+#sessionWarningModal .modal-content {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+#sessionWarningModal .modal-header {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+#sessionWarningModal .modal-footer {
+    border-top: none;
+    padding-top: 0;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+}
