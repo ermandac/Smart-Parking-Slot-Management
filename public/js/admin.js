@@ -83,6 +83,56 @@ function showToast(message) {
     bsToast.show();
 }
 
+// Utility function to handle fetch requests with authentication
+async function authenticatedFetch(url, options = {}) {
+    // Retrieve token from secure storage
+    const session = JSON.parse(localStorage.getItem('session'));
+    
+    if (!session || !session.token) {
+        // No valid session, redirect to login
+        window.location.href = '/login.html';
+        throw new Error('No active session');
+    }
+
+    // Merge default options with provided options
+    const fetchOptions = {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${session.token}`,
+            'Content-Type': 'application/json'
+        }
+    };
+
+    try {
+        const response = await fetch(url, fetchOptions);
+
+        // Check for unauthorized or token-related errors
+        if (response.status === 401 || response.status === 403) {
+            // Clear session and redirect to login
+            localStorage.removeItem('session');
+            window.location.href = '/login.html';
+            throw new Error('Unauthorized access');
+        }
+
+        // Check for other non-OK responses
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        return response.json();
+    } catch (error) {
+        console.error('Fetch error:', error);
+        
+        // Show user-friendly error toast
+        showToast(`Error: ${error.message}`);
+        
+        // Rethrow to allow further error handling
+        throw error;
+    }
+}
+
 // Initialize parking slots grid
 function initializeParkingSlots() {
     const grid = document.getElementById('parkingSlotsGrid');
@@ -119,36 +169,28 @@ function logout() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeParkingSlots();
     
-    // Fetch config and initialize
-    fetch('/api/config', {
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(config => {
-        // Hide vehicle simulation controls if disabled
-        if (!config.showVehicleSimulationControls) {
-            const simulationControls = document.querySelector('.vehicle-simulation-controls');
-            if (simulationControls) {
-                simulationControls.style.display = 'none';
+    // Fetch config using authenticatedFetch
+    authenticatedFetch('/api/config')
+        .then(config => {
+            // Hide vehicle simulation controls if disabled
+            if (!config.showVehicleSimulationControls) {
+                const simulationControls = document.querySelector('.vehicle-simulation-controls');
+                if (simulationControls) {
+                    simulationControls.style.display = 'none';
+                }
             }
-        }
 
-        // Update session timeout config
-        if (config.sessionTimeout) {
-            sessionConfig.timeoutMinutes = config.sessionTimeout;
-        }
-        if (config.gracePeriod) {
-            sessionConfig.countdownDuration = config.gracePeriod;
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching config:', error);
-    });
+            // Update session timeout config
+            if (config.sessionTimeout) {
+                sessionConfig.timeoutMinutes = config.sessionTimeout;
+            }
+            if (config.gracePeriod) {
+                sessionConfig.countdownDuration = config.gracePeriod;
+            }
+        })
+        .catch(error => {
+            console.error('Config fetch error:', error);
+            // Optionally show a more specific error message
+            showToast('Failed to load configuration');
+        });
 });

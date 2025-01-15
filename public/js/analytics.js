@@ -11,24 +11,66 @@ function updateAnalytics(period) {
     fetchAnalyticsData();
 }
 
-// Fetch analytics data from server
-async function fetchAnalyticsData() {
-    try {
-        const response = await fetch(`/api/analytics/${selectedPeriod}`, {
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
+// Utility function to handle fetch requests with authentication
+async function authenticatedFetch(url, options = {}) {
+    // Retrieve token from secure storage
+    const session = JSON.parse(localStorage.getItem('session'));
+    
+    if (!session || !session.token) {
+        // No valid session, redirect to login
+        window.location.href = '/login.html';
+        throw new Error('No active session');
+    }
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch analytics data');
+    // Merge default options with provided options
+    const fetchOptions = {
+        ...options,
+        headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${session.token}`,
+            'Content-Type': 'application/json'
+        }
+    };
+
+    try {
+        const response = await fetch(url, fetchOptions);
+
+        // Check for unauthorized or token-related errors
+        if (response.status === 401 || response.status === 403) {
+            // Clear session and redirect to login
+            localStorage.removeItem('session');
+            window.location.href = '/login.html';
+            throw new Error('Unauthorized access');
         }
 
-        const data = await response.json();
+        // Check for other non-OK responses
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        return response.json();
+    } catch (error) {
+        console.error('Fetch error:', error);
+        
+        // Show user-friendly error toast
+        showToast(`Error: ${error.message}`);
+        
+        // Rethrow to allow further error handling
+        throw error;
+    }
+}
+
+// Fetch analytics data with improved error handling
+async function fetchAnalyticsData() {
+    try {
+        const data = await authenticatedFetch(`/api/analytics/${selectedPeriod}`);
+        
+        // Update dashboard with fetched data
         updateDashboard(data);
     } catch (error) {
-        console.error('Error fetching analytics:', error);
-        showToast('error', 'Failed to fetch analytics data');
+        console.error('Failed to fetch analytics:', error);
+        showToast('Failed to load analytics data');
     }
 }
 
@@ -153,15 +195,16 @@ function updateDistributionChart(data) {
 }
 
 // Show toast notification
-function showToast(type, message) {
+function showToast(message, type = 'error') {
     const toast = document.getElementById('liveToast');
     if (!toast) return;
-    
+
     const toastBody = toast.querySelector('.toast-body');
     if (!toastBody) return;
-    
+
     toastBody.textContent = message;
-    toast.className = `toast ${type === 'error' ? 'bg-danger text-white' : 'bg-success text-white'}`;
+    toast.classList.remove('bg-success', 'bg-danger');
+    toast.classList.add(type === 'error' ? 'bg-danger' : 'bg-success');
     
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
