@@ -100,6 +100,46 @@ A modern web-based parking management system with real-time monitoring, analytic
 - `GET /api/analytics/usage` - Get parking usage data
 - `GET /api/analytics/peak-hours` - Get peak hour analysis
 
+## Hardware Setup
+
+### Arduino Pin Configuration
+
+| Pin | Component | Description |
+|-----|-----------|-------------|
+| D2  | IR Sensor 1 | Parking slot 1 detection |
+| D3  | IR Sensor 2 | Parking slot 2 detection |
+| D4  | IR Sensor 3 | Parking slot 3 detection |
+| D5  | IR Sensor 4 | Parking slot 4 detection |
+| D6  | LED 1 | Status indicator for slot 1 (Green) |
+| D7  | LED 2 | Status indicator for slot 2 (Green) |
+| D8  | LED 3 | Status indicator for slot 3 (Green) |
+| D9  | LED 4 | Status indicator for slot 4 (Green) |
+| D10 | LED 5 | Status indicator for slot 1 (Red) |
+| D11 | LED 6 | Status indicator for slot 2 (Red) |
+| D12 | LED 7 | Status indicator for slot 3 (Red) |
+| D13 | LED 8 | Status indicator for slot 4 (Red) |
+
+### Circuit Diagram
+```
+IR Sensors:
+VCC -> 5V
+GND -> GND
+OUT -> Digital pins (D2-D5)
+
+LEDs:
+Anode   -> Digital pins (D6-D13)
+Cathode -> GND (with 220Ω resistor)
+```
+
+### Hardware Requirements
+- 1x Arduino Uno/Nano
+- 4x IR Obstacle Avoidance Sensors
+- 8x LEDs (4 Green, 4 Red)
+- 8x 220Ω resistors
+- Jumper wires
+- Breadboard
+- USB cable for Arduino
+
 ## Testing Parking Logs
 
 To test the parking log mechanism:
