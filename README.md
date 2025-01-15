@@ -149,26 +149,114 @@ mongod --version
 ```
 
 #### Windows
-1. Download MongoDB Community Server from official website:
-   https://www.mongodb.com/try/download/community
+##### Method 1: Installer (Recommended for Beginners)
+1. Download MongoDB Community Server:
+   - Visit: https://www.mongodb.com/try/download/community
+   - Select "Windows" platform
+   - Choose "MSI" installer
+   - Select the latest stable version
 
-2. Run the installer:
+2. Run the Installer:
+   - Run the downloaded `.msi` file
    - Choose "Complete" setup type
-   - Install MongoDB as a service
-   - Check "Install MongoDB Compass" (optional but recommended)
+   - Select "Install MongoDB as a Service"
+   - Check "Install MongoDB Compass" (recommended)
+   - Click "Install"
 
-3. Add MongoDB to system PATH
-   - Typically installed in `C:\Program Files\MongoDB\Server\6.0\bin`
+3. Configure Environment Variables:
+   - Open "System Properties" > "Advanced" > "Environment Variables"
+   - Under "System variables", edit "Path"
+   - Add MongoDB installation path (typically `C:\Program Files\MongoDB\Server\6.0\bin`)
 
-4. Create data directory
-```cmd
-mkdir C:\data\db
+4. Create Data Directory:
+   Open PowerShell as Administrator:
+   ```powershell
+   # Create default MongoDB data directory
+   mkdir C:\data\db
+
+   # Optional: Create a custom data directory
+   mkdir C:\MongoDB\data
+   ```
+
+5. Start MongoDB Service:
+   ```powershell
+   # Start MongoDB service
+   Start-Service MongoDB
+
+   # Optional: Set service to start automatically
+   Set-Service MongoDB -StartupType Automatic
+   ```
+
+##### Method 2: Chocolatey Package Manager (Advanced Users)
+1. Install Chocolatey (if not already installed):
+   Open PowerShell as Administrator:
+   ```powershell
+   Set-ExecutionPolicy Bypass -Scope Process -Force
+   [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+   iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+   ```
+
+2. Install MongoDB:
+   ```powershell
+   choco install mongodb --version=6.0.5
+   choco install mongodb-compass
+   ```
+
+##### Verification
+```powershell
+# Check MongoDB version
+mongod --version
+
+# Connect to MongoDB
+mongo
 ```
 
-5. Start MongoDB service
-```cmd
-net start MongoDB
-```
+##### Troubleshooting
+- Firewall: Allow MongoDB through Windows Firewall
+- Antivirus: Add MongoDB to exclusion list
+- Permissions: Run PowerShell or Command Prompt as Administrator
+- Log Location: `C:\Program Files\MongoDB\Server\6.0\log\mongod.log`
+
+##### Common Error Solutions
+1. Service Startup Failure:
+   ```powershell
+   # Reinstall MongoDB service
+   mongod --remove
+   mongod --install
+   ```
+
+2. Port Conflicts:
+   - Default MongoDB port is 27017
+   - Check for conflicts using:
+     ```powershell
+     netstat -ano | findstr :27017
+     ```
+
+3. Permission Issues:
+   ```powershell
+   # Ensure proper ownership of data directory
+   icacls C:\data\db /grant "Everyone":(OI)(CI)F
+   ```
+
+##### Security Best Practices
+1. Enable Authentication:
+   ```powershell
+   # Create admin user
+   use admin
+   db.createUser({
+     user: "adminUser",
+     pwd: "strongPassword",
+     roles: ["userAdminAnyDatabase", "dbAdminAnyDatabase"]
+   })
+
+   # Enable authentication in config
+   security:
+     authorization: enabled
+   ```
+
+2. Use Strong Passwords
+3. Limit Network Exposure
+4. Keep MongoDB Updated
 
 ### Initial Database Setup
 ```bash
