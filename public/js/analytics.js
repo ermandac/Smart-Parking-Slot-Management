@@ -1,13 +1,19 @@
 // Initialize charts
 let occupancyChart;
-let slotDistributionChart;
 
 // Initialize selected period
 let selectedPeriod = 'day';
 
 // Update analytics based on selected period
 function updateAnalytics(period) {
-    selectedPeriod = period;
+    // Map select options to server-expected values
+    const periodMap = {
+        'daily': 'day',
+        'weekly': 'week',
+        'monthly': 'month'
+    };
+
+    selectedPeriod = periodMap[period] || 'day';
     fetchAnalyticsData();
 }
 
@@ -46,7 +52,12 @@ async function authenticatedFetch(url, options = {}) {
         // Check for other non-OK responses
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            const error = new Error(`HTTP error! status: ${response.status}`);
+            error.response = { 
+                status: response.status, 
+                data: errorText 
+            };
+            throw error;
         }
 
         return response.json();
@@ -77,16 +88,17 @@ async function fetchAnalyticsData() {
 // Update dashboard with data
 function updateDashboard(data) {
     updateKPICards(data);
-    updateCharts(data);
+    // Removed updateCharts(data);
 }
 
-// Update KPI cards
+// Update KPI cards with analytics data
 function updateKPICards(data) {
     const elements = {
         totalVehicles: document.getElementById('totalVehicles'),
         avgDuration: document.getElementById('avgDuration'),
         occupancyRate: document.getElementById('occupancyRate'),
-        peakHour: document.getElementById('peakHour')
+        peakHour: document.getElementById('peakHour'),
+        peakHourOccupancy: document.getElementById('peakHourOccupancy')
     };
 
     if (elements.totalVehicles) {
@@ -99,36 +111,55 @@ function updateKPICards(data) {
         elements.occupancyRate.textContent = `${Math.round(data.occupancyRate || 0)}%`;
     }
     if (elements.peakHour) {
+        // Format peak hour display
         elements.peakHour.textContent = data.peakHour || '--:--';
+    }
+    if (elements.peakHourOccupancy) {
+        // Display number of vehicles during peak hour
+        elements.peakHourOccupancy.textContent = `${data.peakHourVehicles || 0} vehicles`;
+    }
+
+    // Update the occupancy timeline chart
+    if (data.occupancyTimeline) {
+        updateOccupancyChart(data.occupancyTimeline);
     }
 }
 
-// Update charts
-function updateCharts(data) {
-    updateOccupancyChart(data.occupancyTimeline || { labels: [], values: [] });
-    updateDistributionChart(data.slotDistribution || { shortTerm: 0, mediumTerm: 0, longTerm: 0 });
+// Utility function to format time to 12-hour format
+function formatTo12Hour(timeStr) {
+    if (!timeStr || timeStr === '--:--') return '--:--';
+    
+    // If it's already in 12-hour format, return as is
+    if (timeStr.includes('AM') || timeStr.includes('PM')) return timeStr;
+    
+    const [hours] = timeStr.split(':');
+    const hour = parseInt(hours, 10);
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12; // Convert 0 to 12 for midnight
+    return `${hour12}:00 ${period}`;
 }
 
 // Update occupancy timeline chart
 function updateOccupancyChart(data) {
-    const canvas = document.getElementById('occupancyChart');
-    if (!canvas) return;
+    const ctx = document.getElementById('occupancyChart')?.getContext('2d');
+    if (!ctx) return;
 
-    const ctx = canvas.getContext('2d');
-    
     if (occupancyChart) {
         occupancyChart.destroy();
     }
 
+    // Ensure values don't exceed 100%
+    const values = data.values.map(value => Math.min(value, 100));
+
     occupancyChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.labels || [],
+            labels: data.labels,
             datasets: [{
-                label: 'Occupied Slots',
-                data: data.values || [],
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                label: 'Occupancy Rate',
+                data: values,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
                 fill: true,
                 tension: 0.4
             }]
@@ -136,17 +167,65 @@ function updateOccupancyChart(data) {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
+            layout: {
+                padding: {
+                    left: 10,
+                    right: 25,
+                    top: 25,
+                    bottom: 10
                 }
             },
             scales: {
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                        autoSkip: true,
+                        maxTicksLimit: 12,
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        font: {
+                            size: 11
+                        }
+                    }
+                },
                 y: {
                     beginAtZero: true,
-                    max: 6,
+                    max: 100,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
                     ticks: {
-                        stepSize: 1
+                        callback: function(value) {
+                            return value + '%';
+                        },
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        font: {
+                            size: 12
+                        },
+                        stepSize: 20
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleFont: {
+                        size: 13
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    padding: 10,
+                    callbacks: {
+                        label: function(context) {
+                            return `Occupancy: ${context.parsed.y}%`;
+                        }
                     }
                 }
             }
@@ -154,57 +233,27 @@ function updateOccupancyChart(data) {
     });
 }
 
-// Update slot distribution chart
-function updateDistributionChart(data) {
-    const canvas = document.getElementById('distributionChart');
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    
-    if (slotDistributionChart) {
-        slotDistributionChart.destroy();
-    }
-
-    slotDistributionChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Short Term', 'Medium Term', 'Long Term'],
-            datasets: [{
-                data: [
-                    data.shortTerm || 0,
-                    data.mediumTerm || 0,
-                    data.longTerm || 0
-                ],
-                backgroundColor: [
-                    '#0d6efd',
-                    '#198754',
-                    '#ffc107'
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-}
-
-// Show toast notification
+// Function to show toast
 function showToast(message, type = 'error') {
     const toast = document.getElementById('liveToast');
-    if (!toast) return;
+    if (!toast) {
+        console.warn('Toast element not found');
+        return;
+    }
 
     const toastBody = toast.querySelector('.toast-body');
-    if (!toastBody) return;
+    if (!toastBody) {
+        console.warn('Toast body not found');
+        return;
+    }
 
     toastBody.textContent = message;
-    toast.classList.remove('bg-success', 'bg-danger');
-    toast.classList.add(type === 'error' ? 'bg-danger' : 'bg-success');
+    
+    // Add type-specific styling if needed
+    toast.classList.remove('bg-danger', 'bg-warning', 'bg-success');
+    toast.classList.add(type === 'error' ? 'bg-danger' : 
+                         type === 'warning' ? 'bg-warning' : 
+                         'bg-success');
     
     const bsToast = new bootstrap.Toast(toast);
     bsToast.show();
@@ -218,5 +267,5 @@ document.getElementById('timePeriodSelect')?.addEventListener('change', (e) => {
 // Initialize analytics on page load
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize with daily data
-    updateAnalytics('day');
+    updateAnalytics('daily');
 });

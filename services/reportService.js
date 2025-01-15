@@ -2,18 +2,24 @@ const fs = require('fs');
 const path = require('path');
 const PDFDocument = require('pdfkit');
 const moment = require('moment');
+const { ParkingLog } = require('../models');
 
 class ReportService {
-    constructor(parkingDatabase) {
-        this.db = parkingDatabase;
+    constructor() {
+        // No need for parkingDatabase parameter
     }
 
     // Generate daily parking occupancy report
-    generateDailyReport(date = new Date()) {
+    async generateDailyReport(date = new Date()) {
         const formattedDate = moment(date).format('YYYY-MM-DD');
         
-        // Fetch parking data for the specific date
-        const parkingData = this.db.getParkingDataByDate(formattedDate);
+        // Fetch parking data for the specific date using MongoDB
+        const parkingData = await ParkingLog.find({
+            entryTime: {
+                $gte: moment(date).startOf('day').toDate(),
+                $lte: moment(date).endOf('day').toDate()
+            }
+        });
 
         // Calculate metrics
         const totalSlots = 6;
@@ -32,7 +38,7 @@ class ReportService {
         const hourlyOccupancy = new Array(24).fill(0);
         
         parkingData.forEach(entry => {
-            const hour = moment(entry.timestamp).hour();
+            const hour = moment(entry.entryTime).hour();
             hourlyOccupancy[hour]++;
         });
 
@@ -47,53 +53,51 @@ class ReportService {
     // Find longest parking durations
     calculateLongestParkings(parkingData) {
         return parkingData
-            .sort((a, b) => b.duration - a.duration)
+            .sort((a, b) => (b.exitTime ? b.exitTime - b.entryTime : 0) - (a.exitTime ? a.exitTime - a.entryTime : 0))
             .slice(0, 5);
     }
 
     // Generate PDF report
-    generatePDFReport(reportData) {
-        const doc = new PDFDocument();
-        const reportPath = path.join(__dirname, '..', 'reports', `parking_report_${moment().format('YYYYMMDD_HHmmss')}.pdf`);
+    async generatePDFReport(date = new Date()) {
+        const reportData = await this.generateDailyReport(date);
         
+        // Create a new PDF document
+        const doc = new PDFDocument();
+        const reportPath = path.join(__dirname, '..', 'reports', `parking_report_${moment(date).format('YYYY-MM-DD')}.pdf`);
+        
+        // Ensure reports directory exists
+        fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+        
+        // Pipe the PDF to a file
         doc.pipe(fs.createWriteStream(reportPath));
 
-        // PDF Report Design
-        doc.fontSize(25).text('Parking Occupancy Report', { align: 'center' });
+        // PDF Content
+        doc.fontSize(16).text(`Parking Occupancy Report - ${moment(date).format('YYYY-MM-DD')}`, { align: 'center' });
         doc.moveDown();
-        
+
         doc.fontSize(12)
-           .text(`Report Date: ${moment().format('YYYY-MM-DD HH:mm:ss')}`)
-           .moveDown();
+            .text(`Total Occupancies: ${reportData.totalOccupancies}`)
+            .text(`Average Occupancy Rate: ${reportData.averageOccupancyRate.toFixed(2)}%`);
 
-        doc.text(`Total Occupancies: ${reportData.totalOccupancies}`);
-        doc.text(`Average Occupancy Rate: ${reportData.averageOccupancyRate.toFixed(2)}%`);
-
-        // Peak Hours Section
         doc.moveDown();
-        doc.fontSize(15).text('Peak Hours', { underline: true });
+        doc.text('Peak Hours:');
         reportData.peakHours.forEach(peak => {
-            doc.fontSize(12).text(`Hour ${peak.hour}: ${peak.occupancyCount} occupancies`);
+            doc.text(`Hour ${peak.hour}: ${peak.occupancyCount} occupancies`);
         });
 
+        doc.moveDown();
+        doc.text('Longest Parking Durations:');
+        reportData.longestParkingDurations.forEach((parking, index) => {
+            const duration = parking.exitTime 
+                ? moment.duration(moment(parking.exitTime).diff(moment(parking.entryTime))).humanize()
+                : 'Ongoing';
+            doc.text(`${index + 1}. Duration: ${duration}`);
+        });
+
+        // Finalize the PDF
         doc.end();
 
         return reportPath;
-    }
-
-    // Export data to CSV
-    exportToCSV(reportData) {
-        const csvPath = path.join(__dirname, '..', 'reports', `parking_report_${moment().format('YYYYMMDD_HHmmss')}.csv`);
-        
-        const csvContent = [
-            'Metric,Value',
-            `Total Occupancies,${reportData.totalOccupancies}`,
-            `Average Occupancy Rate,${reportData.averageOccupancyRate.toFixed(2)}%`
-        ].join('\n');
-
-        fs.writeFileSync(csvPath, csvContent);
-
-        return csvPath;
     }
 }
 

@@ -100,6 +100,28 @@ A modern web-based parking management system with real-time monitoring, analytic
 - `GET /api/analytics/usage` - Get parking usage data
 - `GET /api/analytics/peak-hours` - Get peak hour analysis
 
+## Testing Parking Logs
+
+To test the parking log mechanism:
+
+1. Ensure the server is running
+2. Run the test script:
+   ```bash
+   npm run test-parking-log
+   ```
+
+This script will:
+- Find an existing admin user
+- Select an available parking slot
+- Simulate a parking event
+- Create a parking log entry
+- Verify the log creation
+
+### Troubleshooting
+- Make sure MongoDB is running
+- Verify the server is accessible at `http://localhost:3000`
+- Check that an admin user exists in the database
+
 ## Contributing
 
 1. Fork the repository

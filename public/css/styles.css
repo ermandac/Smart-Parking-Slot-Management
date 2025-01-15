@@ -6,6 +6,7 @@ body {
 .card {
     background-color: #34495e;
     border: none;
+    margin-bottom: 1rem;
 }
 
 .card-header {
@@ -167,4 +168,119 @@ body {
 #slot-controls .btn {
     font-size: 0.8rem;
     padding: 5px;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Make charts responsive */
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Analytics dashboard specific styles */
+.analytics-card {
+    height: 100%;
+}
+
+.chart-card {
+    height: 450px;
+}
+
+.chart-card .card-body {
+    height: calc(100% - 56px); /* Subtract header height */
+    padding: 1rem;
+}
+
+/* Navigation styles */
+.navbar {
+    margin-bottom: 2rem;
+}
+
+/* Toast positioning */
+.toast-container {
+    z-index: 1050;
+}
+
+/* Parking slot grid */
+.parking-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.parking-slot {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 1rem;
+    text-align: center;
+}
+
+.slot-occupied {
+    background-color: #dc3545;
+    color: white;
+}
+
+.slot-available {
+    background-color: #28a745;
+    color: white;
+}
+
+/* Vehicle simulation controls */
+.vehicle-simulation-controls {
+    margin-bottom: 2rem;
+}
+
+/* Form styles */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+/* Button styles */
+.btn-group {
+    margin-bottom: 1rem;
+}
+
+/* Table styles */
+.table-responsive {
+    margin-bottom: 1rem;
+}
+
+/* Card header with actions */
+.card-header-with-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+}
+
+/* Period selector styles */
+.period-selector {
+    margin-bottom: 1rem;
+}
+
+/* Status indicators */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-connected {
+    background-color: #28a745;
+}
+
+.status-disconnected {
+    background-color: #dc3545;
 }
