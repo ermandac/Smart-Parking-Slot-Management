@@ -1,0 +1,170 @@
+body {
+    background-color: #2c3e50;
+    color: #ecf0f1;
+}
+
+.card {
+    background-color: #34495e;
+    border: none;
+}
+
+.card-header {
+    background-color: #2c3e50;
+    border-bottom: 1px solid #456789;
+}
+
+.parking-lot {
+    background-color: #34495e;
+    padding: 20px;
+    position: relative;
+}
+
+/* Road styling */
+.road {
+    background-color: #7f8c8d;
+    height: 60px;
+    margin: 20px 0;
+    position: relative;
+}
+
+.road::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(to right, white 50%, transparent 50%);
+    background-size: 20px 100%;
+}
+
+.parking-row {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+#parking-layout {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.parking-slot {
+    width: 250px;
+    height: 250px;
+    border: 3px solid #95a5a6;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    background-color: #2c3e50;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.parking-slot .car-icon {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+.parking-slot.occupied .car-icon {
+    opacity: 1;
+    color: #c0392b;
+}
+
+.parking-slot h5 {
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ecf0f1;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+}
+
+.parking-slot .status-text {
+    font-size: 1rem;
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.parking-slot.occupied .status-text {
+    color: #c0392b;
+}
+
+.slot-available .parking-slot {
+    border-color: #27ae60;
+    background-color: rgba(39, 174, 96, 0.1);
+}
+
+.slot-occupied .parking-slot {
+    border-color: #c0392b;
+    background-color: rgba(192, 57, 43, 0.1);
+}
+
+.parking-slot p {
+    font-size: 1rem;
+    margin-bottom: 5px;
+    color: #bdc3c7;
+}
+
+.parking-slot small {
+    color: #95a5a6;
+}
+
+/* Car icon */
+.car-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+#connection-status {
+    font-size: 0.9rem;
+    padding: 8px 15px;
+}
+
+.stats-panel {
+    background-color: #2c3e50;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.stats-panel h4 {
+    color: #ecf0f1;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    background-color: #34495e;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.simulation-controls {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #2c3e50;
+    border-radius: 5px;
+}
+
+.response-log {
+    margin-top: 20px;
+}
+
+#log-output {
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
+#slot-controls .btn {
+    font-size: 0.8rem;
+    padding: 5px;
+}
