@@ -216,9 +216,22 @@ async function authenticatedFetch(url, options = {}) {
 }
 
 // Function to handle logout
-function logout() {
-    localStorage.removeItem('token');
-    window.location.href = '/login.html';
+async function logout() {
+    try {
+        // Clear all session data
+        localStorage.removeItem('session');
+        sessionStorage.clear();
+        
+        // Set the logout flag to prevent auto-login
+        sessionStorage.setItem('justLoggedOut', 'true');
+        
+        // Force a complete page reload and clear history
+        window.location.replace('/login.html');
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Fallback - try to redirect anyway
+        window.location.replace('/login.html');
+    }
 }
 
 // Function to simulate vehicle detection
